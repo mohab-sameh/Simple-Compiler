@@ -35,8 +35,36 @@ string getIdentifier(string lineOfCode)
 }
 string getVariable(string lineOfCode)
 {
-	string secondWord = lineOfCode.substr(lineOfCode.find(" "), lineOfCode.find(" "));
-	return secondWord;
+	string variable = "";
+	string identifier = getIdentifier(lineOfCode);
+	int pos = lineOfCode.find(" ");
+	while (lineOfCode[pos] == ' ') pos++;
+	while (lineOfCode[pos] != ' ' && lineOfCode[pos] != '=' && lineOfCode[pos] != ';' )
+	{
+		variable += lineOfCode[pos];
+		pos++;
+	}
+
+	return variable;
+}
+bool initialized(string lineOfCode, string variable)
+{
+	bool equalsExist = false;
+	int variablePos = lineOfCode.find(variable);
+	//cout << endl<< endl<< lineOfCode.substr(variablePos);
+
+	cout << endl << endl;
+	for (int i = variablePos; lineOfCode[i] != '\0' ; i++)
+	{
+		//cout << lineOfCode[i];
+		if (lineOfCode[i] == '=')
+		{
+			equalsExist = true;
+			break;
+		}
+	}
+
+	return equalsExist;
 }
 
 void readLine(string& lineOfCode)
@@ -74,19 +102,23 @@ int main()
 
 
 
+	//Loop over the lines of code
 	cout << endl;
 	for (int i = 0; i < sizeof(linesOfCode) / sizeof(linesOfCode[0]); i++)
 	{
-		
+		//Checking if the current line of code starts with an identifier
 		if (checkIfIdentifier(linesOfCode[i]))
 		{
-			//Do here what happens if first word in the line is an identifier
+			//capture the identifier and the variable declared
 			string identifier = "";
 			string variable = "";
-			//cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
+			cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
 			identifier = getIdentifier(linesOfCode[i]);
 			variable = getVariable(linesOfCode[i]);
+			if (initialized(linesOfCode[i], variable)) cout << endl << endl << "variable is inizialized" << endl << endl << endl;
 		}
+
+
 	}
 
 

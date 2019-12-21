@@ -1,4 +1,5 @@
-int x =5;
-lol xx
-hi world
-float haha;
+int x;
+float haha = 0.4;
+string         lol    = "bang bang skeet skeet.";
+bool flg ;
+string x = "omg";
