@@ -8,7 +8,7 @@
 using namespace std;
 
 
-bool checkIfIdentifier(string lineOfCode, string &firstWord)
+bool checkIfIdentifier(string lineOfCode)
 {
 	//Declaration of the valid data types (identifiiers)
 	string identifiersList[6] = { "int", "float", "string", "double", "bool", "char" };
@@ -19,7 +19,7 @@ bool checkIfIdentifier(string lineOfCode, string &firstWord)
 	//}
 
 	//Capturing the first word and checking if it is an identifier
-	firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
+	string firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
 	bool foundDataType = false;
 	for (int i = 0; i < 6; i++)
 	{
@@ -28,35 +28,32 @@ bool checkIfIdentifier(string lineOfCode, string &firstWord)
 	if (foundDataType) return true;
 	else return false;
 }
+string getIdentifier(string lineOfCode)
+{
+	string firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
+	return firstWord;
+}
+string getVariable(string lineOfCode)
+{
+	string secondWord = lineOfCode.substr(lineOfCode.find(" "), lineOfCode.find(" "));
+	return secondWord;
+}
 
 void readLine(string& lineOfCode)
 {
 	cout << "Please enter your line of code: \n";
 	getline(cin, lineOfCode);
-	cout << "\n" << lineOfCode;
 }
 
-
-int main()
+void readLines(string(&linesOfCode)[5])
 {
-	
-
-
-
-
-
-	//Input of user line of code
-	string lineOfCode;
-	readLine(lineOfCode);
-
 	//Get lines of code from file
-	string linesOfCode[5]; // creates array to hold names
 	short loop = 0; //short for loop for input
 	string line; //this will contain the data read from the file
 	ifstream myfile("code.txt"); //opening the file.
 	if (myfile.is_open()) //if the file is open
 	{
-		cout << endl << "the read line of code are: " << endl;
+		cout << endl << endl << "the read lines of code are: ";
 		while (!myfile.eof()) //while the end of file is NOT reached
 		{
 			getline(myfile, line); //get one line from the file
@@ -67,15 +64,29 @@ int main()
 		myfile.close(); //closing the file
 	}
 	else cout << "Unable to open file"; //if the file is not open output
+}
+
+int main()
+{
+	//Get lines of code from file
+	string linesOfCode[5]; // creates array to hold names
+	readLines(linesOfCode);
 
 
 
-
-	//Capturing the first word within the user input to check if it's valid input
-	string firstWord = "";
-	if (checkIfIdentifier(lineOfCode, firstWord))
+	cout << endl;
+	for (int i = 0; i < sizeof(linesOfCode) / sizeof(linesOfCode[0]); i++)
 	{
-		cout << endl<< endl << "found identifier : " << firstWord;
+		
+		if (checkIfIdentifier(linesOfCode[i]))
+		{
+			//Do here what happens if first word in the line is an identifier
+			string identifier = "";
+			string variable = "";
+			//cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
+			identifier = getIdentifier(linesOfCode[i]);
+			variable = getVariable(linesOfCode[i]);
+		}
 	}
 
 
