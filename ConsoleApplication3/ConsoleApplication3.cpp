@@ -8,6 +8,66 @@
 using namespace std;
 
 
+class CNode
+{
+public:
+	string variable;
+	string identifier;
+	string value;
+	CNode* pNext;
+	CNode(string var, string iden, string val)
+	{
+		this->variable = var;
+		this->identifier = iden;
+		this->value = val;
+	}
+};
+
+class CList
+{
+public:
+	CNode* pHead;
+	CNode* pTail;
+
+	CList()
+	{
+		pHead = NULL;
+		pTail = NULL;
+	}
+	void attach(CNode* pnn)
+	{
+		if (pHead == NULL)
+		{
+			pHead = pnn;
+			pTail = pnn;
+		}
+		else
+		{
+			pTail->pNext = pnn;
+			pTail = pnn;
+		}
+	}
+	void dispall()
+	{
+		CNode* ptrav;
+		ptrav = pHead;
+		while (ptrav != NULL)
+		{
+			cout <<"variable: "<< ptrav->variable << " ||| identifier: " << ptrav->identifier << "  |||  value:  " << ptrav->value << endl;
+			ptrav = ptrav->pNext;
+		}
+	}
+};
+
+class Memory
+{
+public:
+	list<string> variableList;
+	list<string> identifierList;
+	list<string> valueList;
+};
+
+
 bool checkIfIdentifier(string lineOfCode)
 {
 	//Declaration of the valid data types (identifiiers)
@@ -47,13 +107,26 @@ string getVariable(string lineOfCode)
 
 	return variable;
 }
+string getValue(string lineOfCode)
+{
+	string value = "";
+	int pos = lineOfCode.find("=");
+	pos++;
+	while (lineOfCode[pos] == ' ')pos++;
+	while (lineOfCode[pos] != ';')
+	{
+		value += lineOfCode[pos];
+		pos++;
+	}
+
+	return value;
+}
 bool initialized(string lineOfCode, string variable)
 {
 	bool equalsExist = false;
 	int variablePos = lineOfCode.find(variable);
-	//cout << endl<< endl<< lineOfCode.substr(variablePos);
+	//cout << endl<< endl<< lineOfCode.substr(variablePos)<< endl << endl;
 
-	cout << endl << endl;
 	for (int i = variablePos; lineOfCode[i] != '\0' ; i++)
 	{
 		//cout << lineOfCode[i];
@@ -96,6 +169,9 @@ void readLines(string(&linesOfCode)[5])
 
 int main()
 {
+	CList memory;
+	CNode* pnn;
+
 	//Get lines of code from file
 	string linesOfCode[5]; // creates array to hold names
 	readLines(linesOfCode);
@@ -112,15 +188,31 @@ int main()
 			//capture the identifier and the variable declared
 			string identifier = "";
 			string variable = "";
-			cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
+			//cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
 			identifier = getIdentifier(linesOfCode[i]);
 			variable = getVariable(linesOfCode[i]);
-			if (initialized(linesOfCode[i], variable)) cout << endl << endl << "variable is inizialized" << endl << endl << endl;
+			if (initialized(linesOfCode[i], variable))
+			{
+				//cout << endl << endl << "variable is initialized" << endl << endl << endl;
+				string value = getValue(linesOfCode[i]);
+				pnn = new CNode(variable, identifier, value);
+				memory.attach(pnn);
+			}
+			else
+			{
+				pnn = new CNode(variable, identifier, "none");
+				memory.attach(pnn);
+			}
 		}
 
-
 	}
+	
 
+
+	//Previewing memory state here
+	cout << endl << endl << endl << endl;
+	memory.dispall();
+	
 
 
 
