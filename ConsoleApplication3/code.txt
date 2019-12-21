@@ -1,5 +1,8 @@
-int x;
+int x=5;
+int y = 6;
+int z= x + y;
+x =420;
 float haha = 0.4;
 string         lol    = "bang bang skeet skeet.";
-bool flg ;
 string x = "omg";
+haha = "no way";

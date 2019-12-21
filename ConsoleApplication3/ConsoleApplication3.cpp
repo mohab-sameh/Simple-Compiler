@@ -22,7 +22,6 @@ public:
 		this->value = val;
 	}
 };
-
 class CList
 {
 public:
@@ -53,21 +52,63 @@ public:
 		ptrav = pHead;
 		while (ptrav != NULL)
 		{
-			cout <<"variable: "<< ptrav->variable << " ||| identifier: " << ptrav->identifier << "  |||  value:  " << ptrav->value << endl;
+			cout <<"variable: "<< ptrav->variable << " ||| identifier: " << ptrav->identifier << "  |||  value:  " << ptrav->value << "  |||" << endl;
 			ptrav = ptrav->pNext;
 		}
 	}
 };
 
-class Memory
+void insertValueInMemory(string targetVariable, string insertionValue, CList& memory)
 {
-public:
-	list<string> variableList;
-	list<string> identifierList;
-	list<string> valueList;
-};
+	bool foundVariable = false;
+
+	CNode* ptrav;
+	ptrav = memory.pHead;
+	while (ptrav != NULL)
+	{
+		if (targetVariable == ptrav->variable)
+		{
+			foundVariable = true;
+			ptrav->value = insertionValue;
+		}
+		ptrav = ptrav->pNext;
+	}
+}
+string returnTargetVariable(string lineOfCode, CList& memory)
+{
+	int tmpPos = lineOfCode.find(" ");
+	if (tmpPos > lineOfCode.find("=")) tmpPos = lineOfCode.find("=");
+	string firstWord = lineOfCode.substr(0, tmpPos);
+	bool foundVariable = false;
+
+	CNode* ptrav;
+	ptrav = memory.pHead;
+	while (ptrav != NULL)
+	{
+		if (firstWord == ptrav->variable) return firstWord;
+		ptrav = ptrav->pNext;
+	}
+}
 
 
+bool checkIfVariable(string lineOfCode, CList &memory)
+{
+	int tmpPos = lineOfCode.find(" ");
+	if (tmpPos > lineOfCode.find("=")) tmpPos = lineOfCode.find("=");
+	string firstWord = lineOfCode.substr(0, tmpPos);
+	bool foundVariable = false;
+
+	CNode* ptrav;
+	ptrav = memory.pHead;
+	while (ptrav != NULL)
+	{
+		if (firstWord == ptrav->variable) foundVariable = true;
+		ptrav = ptrav->pNext;
+	}
+	//if (foundVariable) cout << endl<< endl<< endl<< "found variable: " << firstWord << endl;
+	if (foundVariable) return true;
+	else return false;
+}
 bool checkIfIdentifier(string lineOfCode)
 {
 	//Declaration of the valid data types (identifiiers)
@@ -87,6 +128,24 @@ bool checkIfIdentifier(string lineOfCode)
 	}
 	if (foundDataType) return true;
 	else return false;
+}
+bool checkIfInitialized(string lineOfCode, string variable)
+{
+	bool equalsExist = false;
+	int variablePos = lineOfCode.find(variable);
+	//cout << endl<< endl<< lineOfCode.substr(variablePos)<< endl << endl;
+
+	for (int i = variablePos; lineOfCode[i] != '\0'; i++)
+	{
+		//cout << lineOfCode[i];
+		if (lineOfCode[i] == '=')
+		{
+			equalsExist = true;
+			break;
+		}
+	}
+
+	return equalsExist;
 }
 string getIdentifier(string lineOfCode)
 {
@@ -121,32 +180,14 @@ string getValue(string lineOfCode)
 
 	return value;
 }
-bool initialized(string lineOfCode, string variable)
-{
-	bool equalsExist = false;
-	int variablePos = lineOfCode.find(variable);
-	//cout << endl<< endl<< lineOfCode.substr(variablePos)<< endl << endl;
 
-	for (int i = variablePos; lineOfCode[i] != '\0' ; i++)
-	{
-		//cout << lineOfCode[i];
-		if (lineOfCode[i] == '=')
-		{
-			equalsExist = true;
-			break;
-		}
-	}
 
-	return equalsExist;
-}
 
-void readLine(string& lineOfCode)
-{
-	cout << "Please enter your line of code: \n";
-	getline(cin, lineOfCode);
-}
 
-void readLines(string(&linesOfCode)[5])
+
+
+
+void readLines(string(&linesOfCode)[10])
 {
 	//Get lines of code from file
 	short loop = 0; //short for loop for input
@@ -173,8 +214,8 @@ int main()
 	CNode* pnn;
 
 	//Get lines of code from file
-	string linesOfCode[5]; // creates array to hold names
-	readLines(linesOfCode);
+	string linesOfCode[10]; // array that holds lines of codes in the file
+	readLines(linesOfCode); //insert the lines in file into the array
 
 
 
@@ -191,19 +232,31 @@ int main()
 			//cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
 			identifier = getIdentifier(linesOfCode[i]);
 			variable = getVariable(linesOfCode[i]);
-			if (initialized(linesOfCode[i], variable))
+			
+			//Checking if the variable is initialized with a value
+			if (checkIfInitialized(linesOfCode[i], variable))
 			{
 				//cout << endl << endl << "variable is initialized" << endl << endl << endl;
 				string value = getValue(linesOfCode[i]);
 				pnn = new CNode(variable, identifier, value);
 				memory.attach(pnn);
 			}
+			//If value is declared but not initialized
 			else
 			{
-				pnn = new CNode(variable, identifier, "none");
+				pnn = new CNode(variable, identifier, "");
 				memory.attach(pnn);
 			}
 		}
+		//Checking if the current line starts with a variable
+		if (checkIfVariable(linesOfCode[i], memory))
+		{
+			string targetVariable = returnTargetVariable(linesOfCode[i], memory);
+			string insertionValue = getValue(linesOfCode[i]);
+			insertValueInMemory(targetVariable, insertionValue, memory);
+		}
+
+
 
 	}
 	
