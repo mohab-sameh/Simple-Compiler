@@ -1,8 +1,12 @@
 int x=5;
 int y = 6;
-int z= x + y;
-x =420;
-float haha = 0.4;
-string         lol    = "bang bang skeet skeet.";
+int z= x *  y  * x + y * 4 ;
+int xyz = x + x * 2 * 2;
+int mohab
+x = 420;
+float haha = y;
+string         lol    = "bang    bang skeet skeet.";
 string x = "omg";
 haha = "no way";
+y = "lol gotcha";
+int y = "haha";

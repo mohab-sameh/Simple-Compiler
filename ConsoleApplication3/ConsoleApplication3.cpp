@@ -89,26 +89,40 @@ string returnTargetVariable(string lineOfCode, CList& memory)
 		ptrav = ptrav->pNext;
 	}
 }
-
-
-bool checkIfVariable(string lineOfCode, CList &memory)
+string returnTargetValue(string targetVariable, CList& memory)
 {
-	int tmpPos = lineOfCode.find(" ");
-	if (tmpPos > lineOfCode.find("=")) tmpPos = lineOfCode.find("=");
-	string firstWord = lineOfCode.substr(0, tmpPos);
 	bool foundVariable = false;
 
 	CNode* ptrav;
 	ptrav = memory.pHead;
 	while (ptrav != NULL)
 	{
-		if (firstWord == ptrav->variable) foundVariable = true;
+		if (targetVariable == ptrav->variable)
+		{
+			foundVariable = true;
+			return ptrav->value;
+		}
 		ptrav = ptrav->pNext;
 	}
-	//if (foundVariable) cout << endl<< endl<< endl<< "found variable: " << firstWord << endl;
-	if (foundVariable) return true;
-	else return false;
+	//return "not found";
 }
+string returnTargetIdentifier(string targetVariable, CList& memory)
+{
+	bool foundVariable = false;
+
+	CNode* ptrav;
+	ptrav = memory.pHead;
+	while (ptrav != NULL)
+	{
+		if (targetVariable == ptrav->variable)
+		{
+			foundVariable = true;
+			return ptrav->identifier;
+		}
+		ptrav = ptrav->pNext;
+	}
+}
+
 bool checkIfIdentifier(string lineOfCode)
 {
 	//Declaration of the valid data types (identifiiers)
@@ -129,6 +143,37 @@ bool checkIfIdentifier(string lineOfCode)
 	if (foundDataType) return true;
 	else return false;
 }
+bool checkIfVariable(string lineOfCode, CList &memory)
+{
+	int tmpPos = lineOfCode.find(" ");
+	if (tmpPos > lineOfCode.find("=")) tmpPos = lineOfCode.find("=");
+	string firstWord = lineOfCode.substr(0, tmpPos);
+	bool foundVariable = false;
+
+	CNode* ptrav;
+	ptrav = memory.pHead;
+	while (ptrav != NULL)
+	{
+		if (firstWord == ptrav->variable) foundVariable = true;
+		ptrav = ptrav->pNext;
+	}
+	//if (foundVariable) cout << endl<< endl<< endl<< "found variable: " << firstWord << endl;
+	if (foundVariable) return true;
+	else return false;
+}
+bool checkIfOperator(string sign)
+{
+	
+	string operatorsList[6] = { "+", "-", "/", "%", "*" };
+	
+	bool foundOperator = false;
+	for (int i = 0; i < 5; i++)
+	{
+		if (operatorsList[i] == sign) foundOperator = true;
+	}
+	if (foundOperator) return true;
+	else return false;
+}
 bool checkIfInitialized(string lineOfCode, string variable)
 {
 	bool equalsExist = false;
@@ -147,6 +192,23 @@ bool checkIfInitialized(string lineOfCode, string variable)
 
 	return equalsExist;
 }
+bool checkIfSemicolonExists(string lineOfCode)
+{
+	char semicolon = lineOfCode[size(lineOfCode) - 1];
+	if (semicolon == ';')return true;
+	return false;
+}
+bool checkIfVariableExists(string targetVariable, CList& memory)
+{
+	CNode* ptrav;
+	ptrav = memory.pHead;
+	while (ptrav != NULL)
+	{
+		if (ptrav->variable == targetVariable) return true;
+		ptrav = ptrav->pNext;
+	}
+	return false;
+}
 string getIdentifier(string lineOfCode)
 {
 	string firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
@@ -158,7 +220,7 @@ string getVariable(string lineOfCode)
 	string identifier = getIdentifier(lineOfCode);
 	int pos = lineOfCode.find(" ");
 	while (lineOfCode[pos] == ' ') pos++;
-	while (lineOfCode[pos] != ' ' && lineOfCode[pos] != '=' && lineOfCode[pos] != ';' )
+	while (lineOfCode[pos] != ' ' && lineOfCode[pos] != '=' && lineOfCode[pos] != ';' && lineOfCode[pos] != '\0' )
 	{
 		variable += lineOfCode[pos];
 		pos++;
@@ -172,7 +234,7 @@ string getValue(string lineOfCode)
 	int pos = lineOfCode.find("=");
 	pos++;
 	while (lineOfCode[pos] == ' ')pos++;
-	while (lineOfCode[pos] != ';')
+	while (lineOfCode[pos] != ';' && lineOfCode[pos] != '\0')
 	{
 		value += lineOfCode[pos];
 		pos++;
@@ -181,13 +243,130 @@ string getValue(string lineOfCode)
 	return value;
 }
 
+string resolveValue(string identifier, string variable, string value, CList &memory)
+{
+	string splittedWords[100];
+
+	int strCt = 0;
+	for (int i = 0; value[i] != '\0'; i++)
+	{
+		while (value[i] == ' ')
+		{
+			if (value[i + 1] == '\0')break;
+			if (value[i + 1] != ' ')strCt++;
+			i++;
+		}
+		if (value[i] != ' ' && value[i] != '\0')
+		{
+			splittedWords[strCt] += value[i];
+		}
+		
+	}
+	splittedWords[strCt + 1] = "\0";
+
+
+	
+
+	//Checking if splitted array contains variables that should be resolved
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		//Checking if the current cell is an exiting variable
+		if (checkIfVariableExists(splittedWords[i], memory))
+		{
+			//If such a variable exists, extract the raw value of that variable from the memory.
+			splittedWords[i] = returnTargetValue(splittedWords[i], memory);
+		}
+	}
+
+	//Running the higher priority arithmetic operations within the splitted list
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		if (splittedWords[i] == "*" )
+		{
+			int tmpVal = stoi(splittedWords[i - 1]) * stoi(splittedWords[i+1]);
+			splittedWords[i - 1] = to_string(tmpVal);
+			
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == "/")
+		{
+			int tmpVal = stoi(splittedWords[i - 1]) / stoi(splittedWords[i+1]);
+			splittedWords[i - 1] = to_string(tmpVal);
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == "%")
+		{
+			int tmpVal = stoi(splittedWords[i - 1]) % stoi(splittedWords[i + 1]);
+			splittedWords[i - 1] = to_string(tmpVal);
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+	}
+	//Running the lower priority arithmetic operations within the splitted list
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		if (splittedWords[i] == "+" )
+		{
+			int tmpVal = stoi(splittedWords[i - 1]) + stoi(splittedWords[i + 1]);
+			splittedWords[i - 1] = to_string(tmpVal);
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == "-")
+		{
+			int tmpVal = stoi(splittedWords[i - 1]) + stoi(splittedWords[i + 1]);
+			splittedWords[i - 1] = to_string(tmpVal);
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+	}
+	if (identifier == "int")return splittedWords[0];
+	else return value;
+
+	//Printing the splitted words list after change
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		//cout << splittedWords[i] << " | ";
+	}
+
+	
+}
 
 
 
 
-
-
-void readLines(string(&linesOfCode)[10])
+void readLines(string(&linesOfCode)[20])
 {
 	//Get lines of code from file
 	short loop = 0; //short for loop for input
@@ -212,9 +391,11 @@ int main()
 {
 	CList memory;
 	CNode* pnn;
+	string errorList[100];
+	int errorCt = 0;
 
 	//Get lines of code from file
-	string linesOfCode[10]; // array that holds lines of codes in the file
+	string linesOfCode[20]; // array that holds lines of codes in the file
 	readLines(linesOfCode); //insert the lines in file into the array
 
 
@@ -238,37 +419,94 @@ int main()
 			{
 				//cout << endl << endl << "variable is initialized" << endl << endl << endl;
 				string value = getValue(linesOfCode[i]);
-				pnn = new CNode(variable, identifier, value);
-				memory.attach(pnn);
+				string resolvedValue = resolveValue(identifier, variable, value, memory);
+
+				if (checkIfSemicolonExists(linesOfCode[i]))
+				{
+					if (!checkIfVariableExists(variable, memory))
+					{
+						pnn = new CNode(variable, identifier, resolvedValue);
+						memory.attach(pnn);
+					}
+					else
+					{
+						errorList[errorCt] = "REDECLARATION OF VARIABLE: " + variable + " IN LINE: " + to_string(i);
+						errorCt++;
+					}
+					
+				}
+				if (!checkIfSemicolonExists(linesOfCode[i]))
+				{
+					errorList[errorCt] = "SEMICOLON MISSING IN LINE: " + to_string(i);
+					errorCt++;
+				}
+
 			}
 			//If value is declared but not initialized
 			else
 			{
-				pnn = new CNode(variable, identifier, "");
-				memory.attach(pnn);
+				if (checkIfSemicolonExists(linesOfCode[i]))
+				{
+					if (!checkIfVariableExists(variable, memory))
+					{
+						pnn = new CNode(variable, identifier, "");
+						memory.attach(pnn);
+					}
+					else
+					{
+						errorList[errorCt] = "REDECLARATION OF VARIABLE: " + variable + " IN LINE: " + to_string(i);
+						errorCt++;
+					}
+				}
+				if(!checkIfSemicolonExists(linesOfCode[i]))
+				{
+					errorList[errorCt] = "SEMICOLON MISSING IN LINE: " + to_string(i);
+					errorCt++;
+				}
+				
 			}
 		}
+
+
 		//Checking if the current line starts with a variable
 		if (checkIfVariable(linesOfCode[i], memory))
 		{
 			string targetVariable = returnTargetVariable(linesOfCode[i], memory);
 			string insertionValue = getValue(linesOfCode[i]);
-			insertValueInMemory(targetVariable, insertionValue, memory);
+			string targetIdentifier = returnTargetIdentifier(targetVariable, memory);
+			string resolvedValue = resolveValue(targetIdentifier, targetVariable, insertionValue, memory);
+			insertValueInMemory(targetVariable, resolvedValue, memory);
 		}
 
 
+		//Checking if "if condition starts here..
+
+
+
+		//Checking if Reserved words starts here..
+
+
+
+		//else print unsupported syntax on line i
 
 	}
 	
 
 
+	
+	//Printing error list starts here
+	cout << endl << endl << endl<< endl << "Error List: " << endl<< endl;
+	for (int i = 0; i <= errorCt; i++)
+	{
+		cout << errorList[i] << endl;
+	
+	}
+
+
 	//Previewing memory state here
-	cout << endl << endl << endl << endl;
+	cout << endl << "Memory: " << endl << endl;
 	memory.dispall();
 	
-
-
-
 
 
 

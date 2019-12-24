@@ -6,7 +6,7 @@
 
 int main() {
 	// raw code should be read from a file
-	std::string rawCode = "cc cc ";
+	std::string rawCode = "int x = 5; ";
 
 	// instantiate an object from finite automata which tokenizes
 	tokenFsm tfa;
