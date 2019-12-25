@@ -10,3 +10,6 @@ string x = "omg";
 haha = "no way";
 y = "lol gotcha";
 int y = "haha";
+string yudodis =  "hello world";
+int dodat = 554 ;
+for newVariable = "some words";

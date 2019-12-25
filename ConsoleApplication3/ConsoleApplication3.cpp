@@ -174,6 +174,33 @@ bool checkIfOperator(string sign)
 	if (foundOperator) return true;
 	else return false;
 }
+bool checkIfReservedWord(string lineOfCode)
+{
+	//Declaration of the reserved words
+	string reservedWordsList[7] = { "for", "while", "do", "return", "break" , "continue", "end"};
+	
+	//Capturing the first word and checking if it is a reserved word
+	string firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
+	bool foundDataType = false;
+	for (int i = 0; i < 6; i++)
+	{
+		if (reservedWordsList[i] == firstWord) foundDataType = true;
+	}
+	if (foundDataType) return true;
+	else return false;
+}
+bool checkIfIfCondition(string lineOfCode)
+{
+
+	//Capturing the first word and checking if it is a reserved word
+	string firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
+	bool foundDataType = false;
+
+	if (firstWord == "if") foundDataType = true;
+
+	if (foundDataType) return true;
+	else return false;
+}
 bool checkIfInitialized(string lineOfCode, string variable)
 {
 	bool equalsExist = false;
@@ -242,8 +269,56 @@ string getValue(string lineOfCode)
 
 	return value;
 }
+bool checkIfDataTypeIsValid(string type, string value)
+{
+	char ints[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '+', '*', '%', '/', ' ' };
+	char floats[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '+', '*', '%', '/', ' ' , '.'};
+	
+	bool notValid = false;
+	if (type == "int")
+	{
+		for (int i = 0; value[i] != '\0'; i++)
+		{
+			bool found = false;
+			for (int j = 0; ints[j] != '\0'; j++)
+			{
+				if (value[i] == ints[j])found = true;
+			}
+			if (!found)
+			{
+				notValid = true;
+			}
+		}
+	}
+	if (type == "float")
+	{
+		for (int i = 0; value[i] != '\0'; i++)
+		{
+			bool found = false;
+			for (int j = 0; floats[j] != '\0'; j++)
+			{
+				if (value[i] == floats[j])found = true;
+			}
+			if (!found)
+			{
+				notValid = true;
+			}
+		}
+	}
 
-string resolveValue(string identifier, string variable, string value, CList &memory)
+
+
+	if (notValid)return false;
+	if (!notValid)return true;
+}
+
+
+
+bool resolveCondition(string lineOfCode)
+{
+
+}
+string resolveValue(string identifier, string variable, string value, CList& memory)
 {
 	string splittedWords[100];
 
@@ -260,12 +335,12 @@ string resolveValue(string identifier, string variable, string value, CList &mem
 		{
 			splittedWords[strCt] += value[i];
 		}
-		
+
 	}
 	splittedWords[strCt + 1] = "\0";
 
 
-	
+
 
 	//Checking if splitted array contains variables that should be resolved
 	for (int i = 0; splittedWords[i] != "\0"; i++)
@@ -281,11 +356,11 @@ string resolveValue(string identifier, string variable, string value, CList &mem
 	//Running the higher priority arithmetic operations within the splitted list
 	for (int i = 0; splittedWords[i] != "\0"; i++)
 	{
-		if (splittedWords[i] == "*" )
+		if (splittedWords[i] == "*")
 		{
-			int tmpVal = stoi(splittedWords[i - 1]) * stoi(splittedWords[i+1]);
+			int tmpVal = stoi(splittedWords[i - 1]) * stoi(splittedWords[i + 1]);
 			splittedWords[i - 1] = to_string(tmpVal);
-			
+
 			int j = 0;
 			for (j = i; splittedWords[j + 2] != "\0"; j++)
 			{
@@ -296,7 +371,7 @@ string resolveValue(string identifier, string variable, string value, CList &mem
 		}
 		if (splittedWords[i] == "/")
 		{
-			int tmpVal = stoi(splittedWords[i - 1]) / stoi(splittedWords[i+1]);
+			int tmpVal = stoi(splittedWords[i - 1]) / stoi(splittedWords[i + 1]);
 			splittedWords[i - 1] = to_string(tmpVal);
 
 			int j = 0;
@@ -324,7 +399,7 @@ string resolveValue(string identifier, string variable, string value, CList &mem
 	//Running the lower priority arithmetic operations within the splitted list
 	for (int i = 0; splittedWords[i] != "\0"; i++)
 	{
-		if (splittedWords[i] == "+" )
+		if (splittedWords[i] == "+")
 		{
 			int tmpVal = stoi(splittedWords[i - 1]) + stoi(splittedWords[i + 1]);
 			splittedWords[i - 1] = to_string(tmpVal);
@@ -360,11 +435,8 @@ string resolveValue(string identifier, string variable, string value, CList &mem
 		//cout << splittedWords[i] << " | ";
 	}
 
-	
+
 }
-
-
-
 
 void readLines(string(&linesOfCode)[20])
 {
@@ -425,8 +497,16 @@ int main()
 				{
 					if (!checkIfVariableExists(variable, memory))
 					{
-						pnn = new CNode(variable, identifier, resolvedValue);
-						memory.attach(pnn);
+						if (!checkIfDataTypeIsValid(identifier, resolvedValue))
+						{
+							errorList[errorCt] = "DATA TYPE " + identifier + " IS NOT VALID IN LINE: " + to_string(i) + " WITH VARIABLE: " + variable;
+							errorCt++;
+						}
+						else
+						{
+							pnn = new CNode(variable, identifier, resolvedValue);
+							memory.attach(pnn);
+						}
 					}
 					else
 					{
@@ -475,20 +555,32 @@ int main()
 			string insertionValue = getValue(linesOfCode[i]);
 			string targetIdentifier = returnTargetIdentifier(targetVariable, memory);
 			string resolvedValue = resolveValue(targetIdentifier, targetVariable, insertionValue, memory);
-			insertValueInMemory(targetVariable, resolvedValue, memory);
+			if (!checkIfDataTypeIsValid(targetIdentifier, resolvedValue))
+			{
+				errorList[errorCt] = "DATA TYPE " + targetIdentifier + " IS NOT VALID IN LINE: " + to_string(i) + " WITH VARIABLE: " + targetVariable;
+				errorCt++;
+			}
+			else
+			{
+				insertValueInMemory(targetVariable, resolvedValue, memory);
+			}
+		}
+
+
+		//Checking if Reserved words starts here..
+		if (checkIfReservedWord(linesOfCode[i]))
+		{
+			errorList[errorCt] = "RESERVED WORD " + getIdentifier(linesOfCode[i]) +  " DETECTED ON LINE: " + to_string(i);
+			errorCt++;
 		}
 
 
 		//Checking if "if condition starts here..
+		if (checkIfIfCondition)
+		{
 
-
-
-		//Checking if Reserved words starts here..
-
-
-
-		//else print unsupported syntax on line i
-
+		}
+		
 	}
 	
 
