@@ -1,5 +1,6 @@
 int x=5;
 int y = 6;
+int g=5;
 int z= x *  y  * x + y * 4 ;
 int xyz = x + x * 2 * 2;
 int mohab
@@ -11,5 +12,9 @@ haha = "no way";
 y = "lol gotcha";
 int y = "haha";
 string yudodis =  "hello world";
+if ( x == 6 || x <= y && y == x ) 
+{
+int testVariable = 420;
+}
 int dodat = 554 ;
 for newVariable = "some words";

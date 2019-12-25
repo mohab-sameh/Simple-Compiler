@@ -196,9 +196,7 @@ bool checkIfIfCondition(string lineOfCode)
 	string firstWord = lineOfCode.substr(0, lineOfCode.find(" "));
 	bool foundDataType = false;
 
-	if (firstWord == "if") foundDataType = true;
-
-	if (foundDataType) return true;
+	if (firstWord == "if") return true;
 	else return false;
 }
 bool checkIfInitialized(string lineOfCode, string variable)
@@ -314,14 +312,202 @@ bool checkIfDataTypeIsValid(string type, string value)
 
 
 
-bool resolveCondition(string lineOfCode)
+bool resolveCondition(string lineOfCode, CList &memory)
 {
+	string condition = "";
 
+	bool foundBracket = false;
+	for (int i = 0; lineOfCode[i] != '\0';i++)
+	{
+		if (lineOfCode[i] == '(')foundBracket = true;
+		if (foundBracket)condition += lineOfCode[i];
+		if (lineOfCode[i] == ')') foundBracket = false;
+	}
+
+	cout << endl << endl << condition << endl << endl;
+
+	string splittedWords[100];
+	int strCt = 0;
+	for (int i = 0; condition[i] != '\0'; i++)
+	{
+		while (condition[i] == ' ')
+		{
+			if (condition[i + 1] == '\0')break;
+			if (condition[i + 1] != ' ')strCt++;
+			i++;
+		}
+		if (condition[i] != ' ' && condition[i] != '\0')
+		{
+			splittedWords[strCt] += condition[i];
+		}
+
+	}
+	splittedWords[strCt + 1] = "\0";
+
+
+	//Checking if splitted array contains variables that should be resolved
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		//Checking if the current cell is an exiting variable
+		if (checkIfVariableExists(splittedWords[i], memory))
+		{
+			//If such a variable exists, extract the raw value of that variable from the memory.
+			splittedWords[i] = returnTargetValue(splittedWords[i], memory);
+		}
+	}
+
+
+
+	//Running the high priority operators within the splitted list
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		if (splittedWords[i] == "==")
+		{
+			string tmpVal;
+			if (splittedWords[i - 1] == splittedWords[i + 1]) tmpVal = "t";
+			else tmpVal = "f";
+			splittedWords[i - 1] = tmpVal;
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == "!=") 
+		{
+			string tmpVal;
+			if (splittedWords[i - 1] != splittedWords[i + 1]) tmpVal = "t";
+			else tmpVal = "f";
+			splittedWords[i - 1] = tmpVal;
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == ">=")
+		{
+			string tmpVal;
+			if (splittedWords[i - 1] > splittedWords[i + 1]) tmpVal = "t";
+			else tmpVal = "f";
+			splittedWords[i - 1] = tmpVal;
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == ">")
+		{
+			string tmpVal;
+			if (splittedWords[i - 1] >= splittedWords[i + 1]) tmpVal = "t";
+			else tmpVal = "f";
+			splittedWords[i - 1] = tmpVal;
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == "<=")
+		{
+			string tmpVal;
+			if (splittedWords[i - 1] < splittedWords[i + 1]) tmpVal = "t";
+			else tmpVal = "f";
+			splittedWords[i - 1] = tmpVal;
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+		if (splittedWords[i] == "<")
+		{
+			string tmpVal;
+			if (splittedWords[i - 1] < splittedWords[i + 1]) tmpVal = "t";
+			else tmpVal = "f";
+			splittedWords[i - 1] = tmpVal;
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+
+	}
+	//Running the high priority comparison operators within the splitted list
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		if (splittedWords[i] == "&&")
+		{
+			string tmpVal = "f";
+			if (splittedWords[i - 1] == "t" && splittedWords[i + 1] == "t")tmpVal = "t";
+			splittedWords[i - 1] = tmpVal;
+
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+	}
+	//Running the lower priority comparison operators within the splitted list
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		if (splittedWords[i] == "||")
+		{
+			string tmpVal = "f";
+			if (splittedWords[i - 1] == "t" || splittedWords[i + 1] == "t")tmpVal = "t";
+			splittedWords[i - 1] = tmpVal;
+
+
+			int j = 0;
+			for (j = i; splittedWords[j + 2] != "\0"; j++)
+			{
+				splittedWords[j] = splittedWords[j + 2];
+			}
+			splittedWords[j] = "\0";
+			i--;
+		}
+	}
+
+
+	//Printing the splitted words list after change
+	for (int i = 0; splittedWords[i] != "\0"; i++)
+	{
+		//cout << splittedWords[i] << " | ";
+	}
+
+
+	if (splittedWords[1] == "t")return true;
+	return false;
 }
 string resolveValue(string identifier, string variable, string value, CList& memory)
 {
 	string splittedWords[100];
 
+	//Splitting value into array
 	int strCt = 0;
 	for (int i = 0; value[i] != '\0'; i++)
 	{
@@ -465,6 +651,7 @@ int main()
 	CNode* pnn;
 	string errorList[100];
 	int errorCt = 0;
+	bool ignoreFlg = false;
 
 	//Get lines of code from file
 	string linesOfCode[20]; // array that holds lines of codes in the file
@@ -476,111 +663,120 @@ int main()
 	cout << endl;
 	for (int i = 0; i < sizeof(linesOfCode) / sizeof(linesOfCode[0]); i++)
 	{
-		//Checking if the current line of code starts with an identifier
-		if (checkIfIdentifier(linesOfCode[i]))
+		if (getIdentifier(linesOfCode[i]) == "}") ignoreFlg = false;
+		if (!ignoreFlg)
 		{
-			//capture the identifier and the variable declared
-			string identifier = "";
-			string variable = "";
-			//cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
-			identifier = getIdentifier(linesOfCode[i]);
-			variable = getVariable(linesOfCode[i]);
-			
-			//Checking if the variable is initialized with a value
-			if (checkIfInitialized(linesOfCode[i], variable))
+			//Checking if the current line of code starts with an identifier
+			if (checkIfIdentifier(linesOfCode[i]))
 			{
-				//cout << endl << endl << "variable is initialized" << endl << endl << endl;
-				string value = getValue(linesOfCode[i]);
-				string resolvedValue = resolveValue(identifier, variable, value, memory);
+				//capture the identifier and the variable declared
+				string identifier = "";
+				string variable = "";
+				//cout << endl<< endl << "found identifier : " << getIdentifier(linesOfCode[i]) << " with variable: "<< getVariable(linesOfCode[i])<< "  in line " << i;
+				identifier = getIdentifier(linesOfCode[i]);
+				variable = getVariable(linesOfCode[i]);
 
-				if (checkIfSemicolonExists(linesOfCode[i]))
+				//Checking if the variable is initialized with a value
+				if (checkIfInitialized(linesOfCode[i], variable))
 				{
-					if (!checkIfVariableExists(variable, memory))
+					//cout << endl << endl << "variable is initialized" << endl << endl << endl;
+					string value = getValue(linesOfCode[i]);
+					string resolvedValue = resolveValue(identifier, variable, value, memory);
+
+					if (checkIfSemicolonExists(linesOfCode[i]))
 					{
-						if (!checkIfDataTypeIsValid(identifier, resolvedValue))
+						if (!checkIfVariableExists(variable, memory))
 						{
-							errorList[errorCt] = "DATA TYPE " + identifier + " IS NOT VALID IN LINE: " + to_string(i) + " WITH VARIABLE: " + variable;
-							errorCt++;
+							if (!checkIfDataTypeIsValid(identifier, resolvedValue))
+							{
+								errorList[errorCt] = "DATA TYPE " + identifier + " IS NOT VALID IN LINE: " + to_string(i) + " WITH VARIABLE: " + variable;
+								errorCt++;
+							}
+							else
+							{
+								pnn = new CNode(variable, identifier, resolvedValue);
+								memory.attach(pnn);
+							}
 						}
 						else
 						{
-							pnn = new CNode(variable, identifier, resolvedValue);
+							errorList[errorCt] = "REDECLARATION OF VARIABLE: " + variable + " IN LINE: " + to_string(i);
+							errorCt++;
+						}
+
+					}
+					if (!checkIfSemicolonExists(linesOfCode[i]))
+					{
+						errorList[errorCt] = "SEMICOLON MISSING IN LINE: " + to_string(i);
+						errorCt++;
+					}
+
+				}
+				//If value is declared but not initialized
+				else
+				{
+					if (checkIfSemicolonExists(linesOfCode[i]))
+					{
+						if (!checkIfVariableExists(variable, memory))
+						{
+							pnn = new CNode(variable, identifier, "");
 							memory.attach(pnn);
 						}
+						else
+						{
+							errorList[errorCt] = "REDECLARATION OF VARIABLE: " + variable + " IN LINE: " + to_string(i);
+							errorCt++;
+						}
 					}
-					else
+					if (!checkIfSemicolonExists(linesOfCode[i]))
 					{
-						errorList[errorCt] = "REDECLARATION OF VARIABLE: " + variable + " IN LINE: " + to_string(i);
+						errorList[errorCt] = "SEMICOLON MISSING IN LINE: " + to_string(i);
 						errorCt++;
 					}
-					
+
 				}
-				if (!checkIfSemicolonExists(linesOfCode[i]))
+			}
+
+
+			//Checking if the current line starts with a variable
+			if (checkIfVariable(linesOfCode[i], memory))
+			{
+				string targetVariable = returnTargetVariable(linesOfCode[i], memory);
+				string insertionValue = getValue(linesOfCode[i]);
+				string targetIdentifier = returnTargetIdentifier(targetVariable, memory);
+				string resolvedValue = resolveValue(targetIdentifier, targetVariable, insertionValue, memory);
+				if (!checkIfDataTypeIsValid(targetIdentifier, resolvedValue))
 				{
-					errorList[errorCt] = "SEMICOLON MISSING IN LINE: " + to_string(i);
+					errorList[errorCt] = "DATA TYPE " + targetIdentifier + " IS NOT VALID IN LINE: " + to_string(i) + " WITH VARIABLE: " + targetVariable;
 					errorCt++;
 				}
-
-			}
-			//If value is declared but not initialized
-			else
-			{
-				if (checkIfSemicolonExists(linesOfCode[i]))
+				else
 				{
-					if (!checkIfVariableExists(variable, memory))
-					{
-						pnn = new CNode(variable, identifier, "");
-						memory.attach(pnn);
-					}
-					else
-					{
-						errorList[errorCt] = "REDECLARATION OF VARIABLE: " + variable + " IN LINE: " + to_string(i);
-						errorCt++;
-					}
+					insertValueInMemory(targetVariable, resolvedValue, memory);
 				}
-				if(!checkIfSemicolonExists(linesOfCode[i]))
-				{
-					errorList[errorCt] = "SEMICOLON MISSING IN LINE: " + to_string(i);
-					errorCt++;
-				}
-				
 			}
-		}
 
 
-		//Checking if the current line starts with a variable
-		if (checkIfVariable(linesOfCode[i], memory))
-		{
-			string targetVariable = returnTargetVariable(linesOfCode[i], memory);
-			string insertionValue = getValue(linesOfCode[i]);
-			string targetIdentifier = returnTargetIdentifier(targetVariable, memory);
-			string resolvedValue = resolveValue(targetIdentifier, targetVariable, insertionValue, memory);
-			if (!checkIfDataTypeIsValid(targetIdentifier, resolvedValue))
+			//Checking if Reserved words starts here..
+			if (checkIfReservedWord(linesOfCode[i]))
 			{
-				errorList[errorCt] = "DATA TYPE " + targetIdentifier + " IS NOT VALID IN LINE: " + to_string(i) + " WITH VARIABLE: " + targetVariable;
+				errorList[errorCt] = "RESERVED WORD " + getIdentifier(linesOfCode[i]) + " DETECTED ON LINE: " + to_string(i);
 				errorCt++;
 			}
-			else
+
+
+			//Checking if "if condition starts here..
+			if (checkIfIfCondition(linesOfCode[i]))
 			{
-				insertValueInMemory(targetVariable, resolvedValue, memory);
+				cout << endl << "Condition to be resolved on line: " << i << endl;
+				if (resolveCondition(linesOfCode[i], memory))cout << endl << "condition is true!";
+				else
+				{
+					cout << endl << "condition is false!";
+					ignoreFlg = true;
+				}
 			}
 		}
-
-
-		//Checking if Reserved words starts here..
-		if (checkIfReservedWord(linesOfCode[i]))
-		{
-			errorList[errorCt] = "RESERVED WORD " + getIdentifier(linesOfCode[i]) +  " DETECTED ON LINE: " + to_string(i);
-			errorCt++;
-		}
-
-
-		//Checking if "if condition starts here..
-		if (checkIfIfCondition)
-		{
-
-		}
-		
 	}
 	
 
